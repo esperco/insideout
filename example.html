@@ -10,6 +10,19 @@ Hello ${name}!
 You are visitor number ${num %i}.
 </p>
 <p>
+Escaped HTML code obtained with <code>\${html_snippet}</code>:
+</p>
+<p>
+${html_snippet}
+</p>
+<p>
+HTML escaping can be disabled by using <code>\$\${html_snippet}</code>
+instead:
+</p>
+<p>
+$${html_snippet}
+</p>
+<p>
 dollar open-curly a b c close-curly = \${abc}
 <br/>
 dollar open-curly a b c close-curly = ${x

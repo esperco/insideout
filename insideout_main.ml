@@ -6,6 +6,7 @@ let main () =
   let function_name = ref "gen" in
   let use_defaults = ref true in
   let mode = ref `Ocaml in
+  let escape_function = ref None in
   let options = [
     "-f",
     Arg.Set_string function_name,
@@ -13,12 +14,11 @@ let main () =
           Name of the OCaml function (default: gen)";
 
     "-o",
-    Arg.String (
-      fun s ->
-        if !out_file <> None then
-          failwith "Multiple output files"
-        else
-          out_file := Some s
+    Arg.String (fun s ->
+      if !out_file <> None then
+        failwith "Multiple output files"
+      else
+        out_file := Some s
     ),
     "<file>
           Output file (default: output goes to stdout)";
@@ -40,6 +40,27 @@ let main () =
     "
           Expand the defaults like in -preview mode but produce a valid
           template, keeping special characters escaped.";
+
+    "-esc",
+    Arg.String (fun s ->
+      if !escape_function <> None then
+        failwith "At most one -esc* option can be specified"
+      else
+        escape_function := Some s
+    ),
+    "
+          Apply this function on the result of expanding ${} variables
+          before injecting them. $${} variables remain unaffected.";
+
+    "-esc-html",
+    Arg.Unit (fun () ->
+      if !escape_function <> None then
+        failwith "At most one -esc* option can be specified"
+      else
+        escape_function := Some Insideout_emit.escape_html
+    ),
+    "
+          Short for -esc <function that escapes HTML/XML>.";
   ]
   in
   let anon_fun s =
@@ -77,6 +98,8 @@ Command-line options:
 
   Arg.parse options anon_fun usage_msg;
 
+  let custom_esc = !escape_function in
+
   let ic, source =
     match !in_file with
       None -> stdin, "<stdin>"
@@ -88,8 +111,12 @@ Command-line options:
     | Some file -> open_out file
   in
   match !mode with
-    `Ocaml -> Insideout_emit.ocaml !use_defaults !function_name source ic oc
-  | `Preview -> Insideout_emit.preview false !function_name source ic oc
-  | `Xdefaults -> Insideout_emit.preview true !function_name source ic oc
+  | `Ocaml ->
+      Insideout_emit.ocaml
+        ~custom_esc ~use_defaults:!use_defaults !function_name source ic oc
+  | `Preview ->
+      Insideout_emit.preview ~esc:false !function_name source ic oc
+  | `Xdefaults ->
+      Insideout_emit.preview ~esc:true !function_name source ic oc
 
 let () = main ()

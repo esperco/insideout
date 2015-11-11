@@ -1,7 +1,8 @@
 ML = insideout_ast.ml insideout_lexer.ml insideout_emit.ml insideout_main.ml
+OCAMLFLAGS = -safe-string -annot
 
 insideout: $(ML)
-	ocamlopt -safe-string -o $@ $^
+	ocamlopt $(OCAMLFLAGS) -o $@ $^
 
 insideout_lexer.ml: insideout_lexer.mll
 	ocamllex $<
@@ -12,10 +13,10 @@ demo: example
 	./example > out.html
 
 example: example.ml example_main.ml
-	ocamlopt -safe-string -o example example.ml example_main.ml
+	ocamlopt $(OCAMLFLAGS) -o example example.ml example_main.ml
 
 example.ml: insideout example.html
-	./insideout example.html -o example.ml
+	./insideout example.html -esc-html -o example.ml
 
 ifndef PREFIX
   PREFIX = $(HOME)

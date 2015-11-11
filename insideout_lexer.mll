@@ -42,7 +42,15 @@ rule tokens = parse
   | "${" space* (ident as ident) space*
                                    { let format = opt_format lexbuf in
                                      let default = opt_default lexbuf in
-                                     Var { ident; format; default }
+                                     let esc = true in
+                                     Var { ident; format; default; esc }
+                                     :: tokens lexbuf
+                                   }
+  | "$${" space* (ident as ident) space*
+                                   { let format = opt_format lexbuf in
+                                     let default = opt_default lexbuf in
+                                     let esc = false in
+                                     Var { ident; format; default; esc }
                                      :: tokens lexbuf
                                    }
   | "${@" (filename as filename) "}"
@@ -79,31 +87,40 @@ and string acc = parse
     eprintf "Error in file %s: %s\n%!" source msg;
     exit 1
 
+  let merge_default ~source old_default new_var =
+    match old_default, new_var.default with
+    | Some a, Some b when a <> b ->
+        error source (
+          sprintf
+            "Variable %s occurs multiple times with a \n\
+             different default value."
+            new_var.ident
+        )
+    | None, Some default
+    | Some default, None -> Some default
+
+    | old, new_ ->
+        assert (old = new_);
+        old_default
+
   let parse_template source ic oc =
     let lexbuf = Lexing.from_channel ic in
     let l = tokens lexbuf in
-    let tbl = Hashtbl.create 10 in
+    let defaults = Hashtbl.create 10 in
     List.iter (
       function
         | Var x ->
             let id = x.ident in
             (try
-               let x0 = Hashtbl.find tbl id in
-               if x <> x0 then
-                 error source (
-                   sprintf
-                     "Variable %s occurs multiple times with a \n\
-                      different %%format or different default value."
-                     id
-                 )
-               else
-                 Hashtbl.replace tbl id x
+               let old_default = Hashtbl.find defaults id in
+               let default = merge_default ~source old_default x in
+               Hashtbl.replace defaults id default
              with Not_found ->
-               Hashtbl.add tbl id x
+               Hashtbl.add defaults id x.default
             )
         | Text _ ->
             ()
     ) l;
-    tbl, l
+    defaults, l
 
 }
