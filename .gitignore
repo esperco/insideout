@@ -1,5 +1,6 @@
+*~
 *.cm*
 *.annot
 *.[oa]
-insideout.ml
+insideout_lexer.ml
 insideout

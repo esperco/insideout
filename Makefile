@@ -1,6 +1,10 @@
-insideout: insideout.mll
+ML = insideout_ast.ml insideout_lexer.ml insideout_emit.ml insideout_main.ml
+
+insideout: $(ML)
+	ocamlopt -safe-string -o $@ $^
+
+insideout_lexer.ml: insideout_lexer.mll
 	ocamllex $<
-	ocamlopt -o $@ insideout.ml
 
 .PHONY: demo
 demo: example
@@ -8,7 +12,7 @@ demo: example
 	./example > out.html
 
 example: example.ml example_main.ml
-	ocamlopt -o example example.ml example_main.ml
+	ocamlopt -safe-string -o example example.ml example_main.ml
 
 example.ml: insideout example.html
 	./insideout example.html -o example.ml
@@ -27,5 +31,5 @@ install:
 
 .PHONY: clean
 clean:
-	rm -f *.o *.cm* *~ insideout.ml insideout
+	rm -f *.o *.cm* *~ insideout_lexer.ml insideout
 	rm -f example.ml example preview.html out.html
