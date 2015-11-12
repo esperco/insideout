@@ -8,8 +8,7 @@ let split_modules =
 let main () =
   let out_file = ref None in
   let in_file = ref None in
-  let function_name = ref "gen" in
-  let use_defaults = ref true in
+  let function_name = ref "expand" in
   let mode = ref `Ocaml in
   let escape_function = ref None in
   let rev_opens = ref [] in
@@ -17,7 +16,7 @@ let main () =
     "-f",
     Arg.Set_string function_name,
     "<lowercase identifier>
-          Name of the OCaml function (default: gen)";
+          Name of the generated OCaml function (default: expand)";
 
     "-o",
     Arg.String (fun s ->
@@ -28,12 +27,6 @@ let main () =
     ),
     "<file>
           Output file (default: output goes to stdout)";
-
-    "-no-defaults",
-    Arg.Clear use_defaults,
-    "
-          Produce an OCaml function with only required arguments, ignoring
-          the defaults found in the template.";
 
     "-preview",
     Arg.Unit (fun () -> mode := `Preview),
@@ -127,12 +120,12 @@ Command-line options:
   | `Ocaml ->
       Insideout_emit.ocaml
         ~custom_esc
-        ~use_defaults: !use_defaults
         ~opens: (List.rev !rev_opens)
-        !function_name source ic oc
+        ~expand_function_name: !function_name
+        ~source ic oc
   | `Preview ->
-      Insideout_emit.preview ~esc:false !function_name source ic oc
+      Insideout_emit.preview ~esc:false source ic oc
   | `Xdefaults ->
-      Insideout_emit.preview ~esc:true !function_name source ic oc
+      Insideout_emit.preview ~esc:true source ic oc
 
 let () = main ()
