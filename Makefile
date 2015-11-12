@@ -2,7 +2,7 @@ ML = insideout_ast.ml insideout_lexer.ml insideout_emit.ml insideout_main.ml
 OCAMLFLAGS = -safe-string -annot
 
 insideout: $(ML)
-	ocamlopt $(OCAMLFLAGS) -o $@ $^
+	ocamlopt $(OCAMLFLAGS) -o $@ str.cmxa $^
 
 insideout_lexer.ml: insideout_lexer.mll
 	ocamllex $<
@@ -12,11 +12,11 @@ demo: example
 	./insideout example.html -preview -o preview.html
 	./example > out.html
 
-example: example.ml example_main.ml
-	ocamlopt $(OCAMLFLAGS) -o example example.ml example_main.ml
+example: example_styles.ml example.ml example_main.ml
+	ocamlopt $(OCAMLFLAGS) -o example $^
 
 example.ml: insideout example.html
-	./insideout example.html -esc-html -o example.ml
+	./insideout example.html -o example.ml -esc-html -open Example_styles
 
 ifndef PREFIX
   PREFIX = $(HOME)

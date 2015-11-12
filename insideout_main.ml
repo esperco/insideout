@@ -1,5 +1,10 @@
 open Printf
 
+let split_modules =
+  let sep = Str.regexp "[, \t\r\n]+" in
+  fun s ->
+    Str.split sep s
+
 let main () =
   let out_file = ref None in
   let in_file = ref None in
@@ -7,6 +12,7 @@ let main () =
   let use_defaults = ref true in
   let mode = ref `Ocaml in
   let escape_function = ref None in
+  let rev_opens = ref [] in
   let options = [
     "-f",
     Arg.Set_string function_name,
@@ -61,6 +67,13 @@ let main () =
     ),
     "
           Short for -esc <function that escapes HTML/XML>.";
+
+    "-open",
+    Arg.String (fun s ->
+      rev_opens := List.rev_append (split_modules s) !rev_opens
+    ),
+    "Module1,Module2,...
+          Comma-separated or space-separated list of module names to open.";
   ]
   in
   let anon_fun s =
@@ -113,7 +126,10 @@ Command-line options:
   match !mode with
   | `Ocaml ->
       Insideout_emit.ocaml
-        ~custom_esc ~use_defaults:!use_defaults !function_name source ic oc
+        ~custom_esc
+        ~use_defaults: !use_defaults
+        ~opens: (List.rev !rev_opens)
+        !function_name source ic oc
   | `Preview ->
       Insideout_emit.preview ~esc:false !function_name source ic oc
   | `Xdefaults ->

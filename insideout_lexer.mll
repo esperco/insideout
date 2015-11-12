@@ -33,30 +33,40 @@ let read_file lexbuf fname =
 
 let blank = [' ' '\t']
 let space = [' ' '\t' '\r' '\n']
-let ident = ['a'-'z']['a'-'z' '_' 'A'-'Z' '0'-'9']*
+let ident = ['A'-'Z''a'-'z']['a'-'z' '_' 'A'-'Z' '0'-'9']*
 let graph = ['\033'-'\126']
 let format_char = graph # ['\\' ':' '}']
 let filename = [^'}']+
 
+let dollar_open = '$' ('$'? as double_dollar) '{'
+
+let varname =
+  ('.'? as opt_dot)
+  ((ident '.')* as path
+   ident
+   as full_ident)
+
 rule tokens = parse
-  | "${" space* (ident as ident) space*
-                                   { let format = opt_format lexbuf in
+  | dollar_open space* varname space*
+                                   { let esc = double_dollar = "" in
+                                     let implicit =
+                                       opt_dot = "." || path <> ""
+                                     in
+                                     let format = opt_format lexbuf in
                                      let default = opt_default lexbuf in
-                                     let esc = true in
-                                     Var { ident; format; default; esc }
-                                     :: tokens lexbuf
+                                     Var {
+                                       ident = full_ident;
+                                       format;
+                                       default;
+                                       esc;
+                                       implicit;
+                                     } :: tokens lexbuf
                                    }
-  | "$${" space* (ident as ident) space*
-                                   { let format = opt_format lexbuf in
-                                     let default = opt_default lexbuf in
-                                     let esc = false in
-                                     Var { ident; format; default; esc }
-                                     :: tokens lexbuf
-                                   }
-  | "${@" (filename as filename) "}"
+  | dollar_open "@" (filename as filename) "}"
                                    (* as-is inclusion, no substitutions,
                                       no escaping *)
-                                   { let s = read_file lexbuf filename in
+                                   { ignore double_dollar;
+                                     let s = read_file lexbuf filename in
                                      Text s :: tokens lexbuf }
   | "\\$"                          { Text "$" :: tokens lexbuf }
   | "\\\\"                         { Text "\\" :: tokens lexbuf }
@@ -110,14 +120,15 @@ and string acc = parse
     List.iter (
       function
         | Var x ->
-            let id = x.ident in
-            (try
-               let old_default = Hashtbl.find defaults id in
-               let default = merge_default ~source old_default x in
-               Hashtbl.replace defaults id default
-             with Not_found ->
-               Hashtbl.add defaults id x.default
-            )
+            if not x.implicit then
+              let id = x.ident in
+              (try
+                 let old_default = Hashtbl.find defaults id in
+                 let default = merge_default ~source old_default x in
+                 Hashtbl.replace defaults id default
+               with Not_found ->
+                 Hashtbl.add defaults id x.default
+              )
         | Text _ ->
             ()
     ) l;

@@ -4,7 +4,7 @@
   <title>${title:Welcome!}</title>
 </head>
 <body>
-<h1>${ title :Welcome!}</h1>
+<h1 style="${.st_red}">${ title :Welcome!}</h1>
 <p>
 Hello ${name}!
 You are visitor number ${num %i}.
@@ -29,6 +29,9 @@ dollar open-curly a b c close-curly = ${x
 :${a\
 b\
   c\}}
+</p>
+<p style="${Example_styles.st_red}">
+  Included file <code>example_footer.html</code>:
 </p>
 ${@example_footer.html}
 </body>
