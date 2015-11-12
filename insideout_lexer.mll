@@ -69,6 +69,11 @@ rule tokens = parse
                                      let s = read_file lexbuf filename in
                                      Text s :: tokens lexbuf }
   | "\\$"                          { Text "$" :: tokens lexbuf }
+  | '\\' '\r'? '\n' blank*         { (* end-of-line backslash and blanks
+                                        at the beginning of the next line
+                                        are ignored. *)
+                                     tokens lexbuf
+                                   }
   | "\\\\"                         { Text "\\" :: tokens lexbuf }
   | [^'$''\\']+ as s               { Text s :: tokens lexbuf }
   | _ as c                         { Text (String.make 1 c) :: tokens lexbuf }
