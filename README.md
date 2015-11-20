@@ -16,7 +16,7 @@ Hello ${name}
 becomes:
 
 ```ocaml
-let gen ~name = "Hello " ^ name
+let expand ~name () = "Hello " ^ name
 ```
 Use a backslash character to escape $ or \ itself (\\\${x} gives \${x}).
 
@@ -37,8 +37,35 @@ Default values (useful for previews or suggested usage):
 ${title:Here goes the title}
 ```
 
-Use `insideout -help` to see the command-line options.
+If specified on the command line with `-esc` or `-esc-html`,
+text variables injected with `${}` are automatically escaped
+using the specified escape function. `$${}` can be used to
+inject code without escaping. In the case of HTML,
+the command is `insideout -esc-html`.
 
+```html
+<h1>${title}</h1>
+$${first_section}
+```
+
+The generated `expand` function for the example above
+can be called as follows:
+
+```ocaml
+My_template_html.expand
+  ~title: "We <3 html!"
+  ~first_section: "<p>It's true that 1 &lt; 2.</p>"
+  ()
+```
+
+which produces:
+
+```html
+<h1>We &lt;3 html!</h1>
+<p>It's true that 1 &lt; 2.</p>
+```
+
+Use `insideout -help` to see all command-line options.
 
 Installation
 ------------
