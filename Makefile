@@ -30,6 +30,10 @@ endif
 install:
 	cp insideout $(BINDIR)
 
+.PHONY: uninstall
+uninstall:
+	rm -f $(BINDIR)/insideout
+
 .PHONY: clean
 clean:
 	rm -f *.o *.cm* *~ insideout_lexer.ml insideout
