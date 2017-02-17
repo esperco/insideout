@@ -151,7 +151,7 @@ let escape_html = "fun s ->
     | '&' -> Buffer.add_string buf \"&amp;\"
     | '<' -> Buffer.add_string buf \"&lt;\"
     | '>' -> Buffer.add_string buf \"&gt;\"
-    | '\\'' -> Buffer.add_string buf \"&apos;\"
+    | '\\'' -> Buffer.add_string buf \"&#39;\"
     | '\"' -> Buffer.add_string buf \"&quot;\"
     | c -> Buffer.add_char buf c
   ) s;
